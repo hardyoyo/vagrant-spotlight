@@ -59,8 +59,6 @@ I've borrowed freely from the following projects:
 * [Double-p/smtf-test](https://github.com/double-p/smtf-test) (inspiration for the Ansible Local provisioner layout)
 * [Geerlingguy's Ansible-Vagrant Examples](https://github.com/geerlingguy/ansible-vagrant-examples)
 
-This project leverages the work of my colleague [Kevin S. Clarke](https://github.com/ksclarke) and in particular his [Packer-Samvera](https://github.com/ksclarke/packer-samvera) project. Both this project and Kevin's levarage the work of [Digital Curation Experts](https://github.com/curationexperts) and in particular their [Ansible-Samvera roles](https://github.com/curationexperts/ansible-samvera). Thanks to everyone who shares their work with the community!
-
 
 ## License
 
