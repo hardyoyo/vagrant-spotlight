@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+#^syntax detection
+
+role "tulibraries.ansible-rails_app",
+      github: "tulibraries/ansible-rails_app"
+
+role "geerlingguy.apache",
+      github: "geerlingguy/apache"
+
+role "tulibraries.ansible_passenger-apache"
+      github: "tulibraries/ansible_passenger-apache"
+
+role "zzet.rbenv"
+      github: "zzet/rbenv"
+
+role "geerlingguy.solr"
+      github: "geerlingguy/solr"
+
+# more roles can be added here, you can pull them from GitHub or from Ansible Galaxy
+# docs here: https://github.com/bcoe/librarian-ansible

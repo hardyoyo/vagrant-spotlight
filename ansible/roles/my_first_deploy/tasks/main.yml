@@ -1,0 +1,109 @@
+---
+# ROLE: my_first_deploy
+# roles/my_first_deploy/tasks/main.yml
+#
+# Runs the first Capistrano managed deployment
+# Usage:
+#    - { role: my_first_deploy, project_name: *required*, project_owner: *required*, project_branch: *required* }
+#
+# Does a minimal install of a codebase from development mode to bootstrap a capistrano deployment
+# The codebase being deployed must be capified and have a config/deploy/localhost.rb stage file
+
+- name: generate rails secret
+  command: openssl rand -hex 64
+  register: rails_secret
+
+- name: create shared config files
+  become: yes
+  template: src={{ item }}.j2 dest=/opt/{{ project_name }}/shared/config/{{ item }} owner=deploy group=deploy backup=no
+  with_items:
+      - database.yml
+      - secrets.yml
+
+- name: clone repo
+  git:
+      repo: https://github.com/{{ project_owner }}/{{ project_name }}.git
+      dest: /home/{{ ansible_ssh_user }}/{{ project_name }}
+      version: "{{ project_branch }}"
+
+- name: install gems (bundle install)
+  shell: bundle install
+  args:
+    chdir: /home/{{ ansible_ssh_user }}/{{ project_name }}
+
+- name: create deployment keypair for connection user
+  # Set up a keypair so the ansible user can connect as the capistrano deploy user
+  user:
+      name: "{{ ansible_ssh_user }}"
+      generate_ssh_key: yes
+      ssh_key_file: .ssh/id_rsa
+
+- name: read public key
+  slurp:
+      src: /home/{{ ansible_ssh_user }}/.ssh/id_rsa.pub
+  register: public_key
+
+- name: add public key to deploy user
+  become: yes
+  authorized_key:
+      user: deploy
+      key: "{{ public_key.content | b64decode }}"
+
+- name: create apache vhosts file
+  become: yes
+  template: src=apache_vhost.j2 dest=/etc/apache2/sites-enabled/{{ project_name }}.conf owner=root group=root backup=no
+
+- name: restart apache
+  become: true
+  service: name=apache2 state=restarted
+
+- name: copy config files to the correct deployment folder
+  copy:
+    src: '/home/{{ ansible_ssh_user }}/{{ project_name }}/config/{{ item }}'
+    dest: '/opt/{{ project_name }}/shared/config/{{ item }}'
+    remote_src: yes
+    owner: deploy
+    group: deploy
+    mode: 0644
+  with_items:
+    - 'analytics.yml'
+    - 'blacklight.yml'
+    - 'browse_everything_providers.yml'
+    - 'fedora.yml'
+    - 'solr.yml'
+  become: yes
+
+- name: deploy to production directories with capistrano
+  shell: cap {{ cap_deployment }} deploy
+  args:
+    chdir: /home/{{ ansible_ssh_user }}/{{ project_name }}
+
+- name: symlink schema from code to solr
+  become: yes
+  file: src=/opt/{{ project_name }}/current/solr/config/schema.xml dest=/var/solr/data/{{ project_name }}/conf/schema.xml state=link force=yes
+
+- name: symlink solrconfig from code to solr
+  become: yes
+  file: src=/opt/{{ project_name }}/current/solr/config/solrconfig.xml dest=/var/solr/data/{{ project_name }}/conf/solrconfig.xml state=link force=yes
+
+- name: restart solr
+  become: true
+  service: name=solr state=restarted
+
+- name: restart apache
+  become: true
+  service: name=apache2 state=restarted
+
+- name: ensure default collection types are set with rake
+  become: yes
+  become_user: deploy
+  shell: RAILS_ENV=production bundle exec rake hyrax:default_collection_types:create
+  args:
+    chdir: /opt/{{ project_name }}/current
+
+- name: ensure default admin set with rake
+  become: yes
+  become_user: deploy
+  shell: RAILS_ENV=production bundle exec rake hyrax:default_admin_set:create
+  args:
+    chdir: /opt/{{ project_name }}/current

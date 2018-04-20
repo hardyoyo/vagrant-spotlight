@@ -1,0 +1,11 @@
+Ansiblefile.lock
+.librarian
+librarian_roles
+tmp
+*.log
+*.retry
+imagemagick_sources
+.vagrant
+.vagrant/*
+config/local-bootstrap.sh
+^config/local-bootstrap.sh.example

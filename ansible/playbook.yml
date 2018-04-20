@@ -1,0 +1,107 @@
+# the playbook draws inspiration from this playbook:
+# https://github.com/bibliotechy/ccj_playbook/blob/master/playbook.yml
+
+# Additional playbook wide variables can be found in
+# group_vars/all/vars.yml
+# Encrypted vars, like passwords, can be found in
+# group_vars/all/pw.yml
+
+
+- name: Install mysql
+  hosts: db
+  roles:
+    - role: mysql
+      mysql_packages:
+        - mariadb-server
+        - MySQL-python
+      mysql_databases:
+        - name: "{{ rails_app_name }}"
+      mysql_users:
+        - name: "{{ rails_app_name}}"
+          password: "{{ mysql_app_db_user_password}}"
+          priv: "*.*:ALL"
+      mysql_slow_query_log_enabled: yes
+  become: yes
+
+- name: Install and configure apache and passenger
+  hosts: app
+  become: yes
+  roles:
+    - role: httpd
+      apache_create_vhosts: false
+    - role: passenger
+  tags:
+    - apache
+
+- name: Install Solr
+  hosts: solr
+  become: yes
+  roles:
+    - role: java
+      java_packages:
+        - java-1.8.0-openjdk
+    - role: solr
+      solr_cores:
+        - "{{ solr_core }}"
+  tags:
+    - solr
+
+- name: Ensure that the app user exists and install rbenv
+  hosts: app
+  become: yes
+  pre_tasks:
+    - name: Install install bzip2
+      package:
+        name: bzip2
+        state: present
+  vars:
+    rbenv_users: "{{ rails_app_user }}"
+    rbenv_owner: "{{ rails_app_user }}"
+    rbenv_group: "{{ rails_app_user }}"
+    rbenv:
+      env: user
+      version: v1.0.0
+      default_ruby: 2.4.0
+      rubies:
+        - version: 2.4.0
+  pre_tasks:
+    - user:
+        name: "{{ rails_app_user }}"
+        state: present
+    - name: Set some the deployment pathin rails
+      lineinfile:
+        dest: /home/{{ rails_app_user }}/.bashrc
+        regexp: "export {{item.envvar}}="
+        line: "export {{item.envvar}}={{item.value}}"
+      with_items:
+        - {envvar: "SECRET_KEY_BASE", value: "{{ rails_app_name |hash('sha1') }}"}
+        - {envvar: "DB_NAME", value: "{{ rails_app_name }}"}
+        - {envvar: "DB_USER", value: "{{ rails_app_name }}"}
+        - {envvar: "DB_PASSWORD", value: "{{ mysql_app_db_user_password }}"}
+        - {envvar: "DB_HOST", value: "localhost"}
+      no_log: True
+
+  roles:
+    - role: rbenv
+    - role: rails_app
+      rails_app_git_url: https://github.com/bibliotechy/ccj.git
+      rails_app_git_branch: new-models
+      is_blacklight_app: yes
+
+  tasks:
+    - service:
+        name: firewalld
+        state: started
+        enabled: yes
+    - firewalld:
+        service: http
+        state: enabled
+        permanent: yes
+        immediate: yes
+  tags:
+    - rbenv
+    - app
+
+- hosts: all
+  roles:
+     - { role: ansible-rails_app, rails_app_name: spotlight, rails_app_git_url: https://github.com/hardyoyo/spotlight}
