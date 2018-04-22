@@ -27,11 +27,6 @@ Standard Vagrant protocol: clone this repository, cd to the root of it, and run
 vagrant up
 ```
 
-## I'm in a hurry, I just want to play with the results, I don't want to watch ansible run forever
-
-I hear ya, it's like watching paint dry. Now, watching paint dry might be exactly what you're after, but if you're eager to get started with an already-provisioned Samvera/Hyrax/Nurax instance, you might want to follow Kevin Clarke's much more
-simple guide here: [but I don't want to build anything](https://github.com/ksclarke/packer-samvera#but-i-dont-want-to-build-anything).
-
 ## Vagrant Plugin Recommendations
 
 Vagrant has a robust community of plugin developers, and some of the plugins are quite nice. [Installing a Vagrant plugin](https://www.vagrantup.com/docs/plugins/usage.html) is simple.
