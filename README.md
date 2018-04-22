@@ -31,9 +31,9 @@ vagrant up
 
 Vagrant has a robust community of plugin developers, and some of the plugins are quite nice. [Installing a Vagrant plugin](https://www.vagrantup.com/docs/plugins/usage.html) is simple.
 
-The following Vagrant plugin is *required*, if you use the [ubuntu/xenial](https://app.vagrantup.com/ubuntu/boxes/xenial64) base box. Kevin Clarke's base box is reasonably-sized, so this plugin won't do anything for it. But, if you get to tinkering and want to use a standard base box so you can test ALL of the DCE Ansible roles, you'll want to use the Vagrant-Disksize plugin.
+The following Vagrant plugin is *highly-recommended*, if you use a base box with a small drive space allocation (many base box images do this to minimize download time). Installing the Vagrant-Disksize plugin is a good insurance policy, and will help.
 
-* [Vagrant-Disksize](https://github.com/sprotheroe/vagrant-disksize) - may not be required if you use another base box, but it's handy if you ever do end up using the ubuntu/xenial base box (it's too tiny to be usable for much of anything).
+* [Vagrant-Disksize](https://github.com/sprotheroe/vagrant-disksize)
 
 The following Vagrant plugins are not required, but they do make using Vagrant more enjoyable.
 
